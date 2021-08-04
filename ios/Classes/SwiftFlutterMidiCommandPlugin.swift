@@ -341,8 +341,27 @@ public class SwiftFlutterMidiCommandPlugin: NSObject, CBCentralManagerDelegate, 
         devices.append(contentsOf: nativeDevices.values)
         
         // BLE
-        for periph:CBPeripheral in discoveredDevices {
+
+        var activeConnections:Set<CBPeripheral> = []
+        for periph:CBPeripheral in manager.retrieveConnectedPeripherals(withServices: [CBUUID(string: "03B80E5A-EDE8-4B33-A751-6CE34EC4C700")]) {
+            activeConnections.insert(periph)
             let id = periph.identifier.uuidString
+            // print("Connected \(id)")
+            devices.append([
+                "name" : periph.name ?? "Unknown",
+                "id" : id,
+                "type" : "BLE",
+                "connected": "true",
+                "inputs" : [["id":0, "connected":false]],
+                "outputs" : [["id":0, "connected":false]]
+                ])
+        }
+        for periph:CBPeripheral in discoveredDevices {
+            if(activeConnections.contains(periph)) {
+                continue
+            }
+            let id = periph.identifier.uuidString
+            // print("Not Connected \(id)")
             devices.append([
                 "name" : periph.name ?? "Unknown",
                 "id" : id,
